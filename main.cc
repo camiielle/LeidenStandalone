@@ -19,7 +19,7 @@ std::vector<std::string> readFilePaths(const std::string& txtFileName) {
   std::ifstream infile(txtFileName);
   std::string line;
   while (std::getline(infile, line)) {
-    if (!line.empty()) {
+    if (!line.empty() && line.front() != '#') {
       fileNames.push_back(line);
     }
   }
@@ -111,7 +111,6 @@ void TICLGraphProducer(std::vector<Trackster>& trackstersclue3d, TICLGraph& grap
 // Function to read multiple ROOT files and process the "tracksters" TTree
 void readMultipleRootFiles(const std::vector<std::string>& fileNames) {
   for (const auto& fileName : fileNames) {
-    std::cout << "Running event: " << fileName << std::endl;
     TFile* file = TFile::Open(fileName.c_str());
     if (!file || file->IsZombie()) {
       std::cerr << "Error opening file: " << fileName << std::endl;
@@ -144,7 +143,7 @@ void readMultipleRootFiles(const std::vector<std::string>& fileNames) {
     tree->SetBranchAddress("barycenter_z", &barycenter_z);
     tree->SetBranchAddress("barycenter_eta", &barycenter_eta);
     tree->SetBranchAddress("barycenter_phi", &barycenter_phi);
-  
+
     tree->SetBranchAddress("raw_energy", &raw_energy);
 
     // Vector to hold Tracksters for each event
@@ -152,7 +151,7 @@ void readMultipleRootFiles(const std::vector<std::string>& fileNames) {
 
     // Loop over the entries and fill the vector with Tracksters
     auto maxNumTracksters = tree->GetEntries();
-    for (size_t i = 0; i < maxNumTracksters; ++i) {
+    for (size_t i = 0; i < 80; ++i) {
       tree->GetEntry(i);
 
       for (size_t j = 0; j < barycenter_x->size(); ++j) {
@@ -161,22 +160,23 @@ void readMultipleRootFiles(const std::vector<std::string>& fileNames) {
             barycenter_eta->at(j), barycenter_phi->at(j), barycenter_x->at(j), barycenter_y->at(j), barycenter_z->at(j));
         t.setRawEnergy(raw_energy->at(j));
         tracksters.push_back(t);
-        t.Print();
+        //t.Print();
       }
     }
+    std::cout << "NUM OF TRACKSTERS " << tracksters.size() << std::endl;
 
     // Optionally, print all Tracksters
     //for (const auto& t : tracksters) {
     // t.Print();
     //}
-
     TICLGraph graph;
     TICLGraphProducer(tracksters, graph);
+    std::cout << "Running algo on event: " << fileName << std::endl;
     //applying Leiden algo
     Partition partition{std::vector<Community>{}};
     std::vector<Flat> flatFinalPartition;
     singletonPartition(graph, partition);
-    //std::cout << "GRAPH NODE SIZE " << partition.getCommunities().size() << std::endl;
+    std::cout << "GRAPH NODE SIZE " << partition.getCommunities().size() << std::endl;
     int gamma{1};
     double theta{0.01};
     leidenAlgorithm(graph, partition, flatFinalPartition, gamma, theta);
