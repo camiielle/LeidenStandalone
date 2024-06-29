@@ -513,8 +513,8 @@ namespace ticl {
       if (isNodeWellConnected(node, subset, gamma)) {
         int index = partition.findCommunityIndex(node);
         auto &nodeCommunity = communities[index];
-        std::cout << "COMM (non recursive) SIZE " << nodeCommunity.getNodes().size();
-        std::cout << " COMM SIZE " << communitySize(nodeCommunity, 0);
+        //std::cout << "COMM (non recursive) SIZE " << nodeCommunity.getNodes().size();
+        //std::cout << " COMM SIZE " << communitySize(nodeCommunity, 0);
         assert(communitySize(nodeCommunity, 0) != 0);
         //consider only nodes that have not yet been merged
         if (communitySize(nodeCommunity, 0) == 1) {

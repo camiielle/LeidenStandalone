@@ -146,14 +146,12 @@ void readMultipleRootFiles(const std::vector<std::string>& fileNames) {
 
     tree->SetBranchAddress("raw_energy", &raw_energy);
 
-    // Vector to hold Tracksters for each event
-    std::vector<Trackster> tracksters;
-
-    // Loop over the entries and fill the vector with Tracksters
-    auto maxNumTracksters = tree->GetEntries();
-    for (size_t i = 0; i < 80; ++i) {
+    // Loop over the events and fill the vector with Tracksters
+    auto maxNumEvents = tree->GetEntries();
+    for (size_t i = 0; i < 40; ++i) {
+      // Vector to hold Tracksters for each event
+      std::vector<Trackster> tracksters;
       tree->GetEntry(i);
-
       for (size_t j = 0; j < barycenter_x->size(); ++j) {
         Trackster t;
         t.setBarycenter(
@@ -162,24 +160,24 @@ void readMultipleRootFiles(const std::vector<std::string>& fileNames) {
         tracksters.push_back(t);
         //t.Print();
       }
+      std::cout << "NUM OF TRACKSTERS " << tracksters.size() << std::endl;
+      TICLGraph graph;
+      TICLGraphProducer(tracksters, graph);
+      std::cout << "Running algo on event: " << fileName << std::endl;
+      //applying Leiden algo
+      Partition partition{std::vector<Community>{}};
+      std::vector<Flat> flatFinalPartition;
+      singletonPartition(graph, partition);
+      std::cout << "GRAPH NODE SIZE " << partition.getCommunities().size() << std::endl;
+      int gamma{1};
+      double theta{0.01};
+      leidenAlgorithm(graph, partition, flatFinalPartition, gamma, theta);
     }
-    std::cout << "NUM OF TRACKSTERS " << tracksters.size() << std::endl;
 
     // Optionally, print all Tracksters
     //for (const auto& t : tracksters) {
     // t.Print();
     //}
-    TICLGraph graph;
-    TICLGraphProducer(tracksters, graph);
-    std::cout << "Running algo on event: " << fileName << std::endl;
-    //applying Leiden algo
-    Partition partition{std::vector<Community>{}};
-    std::vector<Flat> flatFinalPartition;
-    singletonPartition(graph, partition);
-    std::cout << "GRAPH NODE SIZE " << partition.getCommunities().size() << std::endl;
-    int gamma{1};
-    double theta{0.01};
-    leidenAlgorithm(graph, partition, flatFinalPartition, gamma, theta);
     file->Close();
   }
 }
