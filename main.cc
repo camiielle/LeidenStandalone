@@ -148,7 +148,10 @@ void readMultipleRootFiles(const std::vector<std::string>& fileNames) {
 
     // Loop over the events and fill the vector with Tracksters
     auto maxNumEvents = tree->GetEntries();
+    size_t numOfEvents = 40;
+    std::cout << "TOTAL EVENTS: " << numOfEvents << std::endl;
     for (size_t i = 0; i < 40; ++i) {
+      std::cout << "Began processing event: " << i << std::endl;
       // Vector to hold Tracksters for each event
       std::vector<Trackster> tracksters;
       tree->GetEntry(i);
@@ -160,20 +163,19 @@ void readMultipleRootFiles(const std::vector<std::string>& fileNames) {
         tracksters.push_back(t);
         //t.Print();
       }
-      std::cout << "NUM OF TRACKSTERS " << tracksters.size() << std::endl;
+      std::cout << "NUM OF TRACKSTERS: " << tracksters.size() << std::endl;
       TICLGraph graph;
       TICLGraphProducer(tracksters, graph);
-      std::cout << "Running algo on event: " << fileName << std::endl;
+      std::cout << "Running algo: " << i << std::endl;
       //applying Leiden algo
       Partition partition{std::vector<Community>{}};
       std::vector<Flat> flatFinalPartition;
       singletonPartition(graph, partition);
-      std::cout << "GRAPH NODE SIZE " << partition.getCommunities().size() << std::endl;
+      std::cout << "INTIAL GRAPH NODE SIZE: " << partition.getCommunities().size() << std::endl;
       int gamma{1};
       double theta{0.01};
       leidenAlgorithm(graph, partition, flatFinalPartition, gamma, theta);
     }
-
     // Optionally, print all Tracksters
     //for (const auto& t : tracksters) {
     // t.Print();
