@@ -144,14 +144,15 @@ void readMultipleRootFiles(const std::vector<std::string>& fileNames) {
     tree->SetBranchAddress("barycenter_z", &barycenter_z);
     tree->SetBranchAddress("barycenter_eta", &barycenter_eta);
     tree->SetBranchAddress("barycenter_phi", &barycenter_phi);
+  
     tree->SetBranchAddress("raw_energy", &raw_energy);
 
     // Vector to hold Tracksters for each event
     std::vector<Trackster> tracksters;
 
     // Loop over the entries and fill the vector with Tracksters
-    size_t maxNumTracksters {}
-    for (size_t i = 0; i < 5; ++i) {
+    auto maxNumTracksters = tree->GetEntries();
+    for (size_t i = 0; i < maxNumTracksters; ++i) {
       tree->GetEntry(i);
 
       for (size_t j = 0; j < barycenter_x->size(); ++j) {

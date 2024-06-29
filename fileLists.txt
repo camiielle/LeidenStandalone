@@ -8,11 +8,4 @@
 /home/HPC/clazzati/final/LeidenStandalone/data/data/subSet/histo_17250099_114.root
 /home/HPC/clazzati/final/LeidenStandalone/data/data/subSet/histo_17250099_21.root
 /home/HPC/clazzati/final/LeidenStandalone/data/data/subSet/histo_17250099_22.root
-/home/HPC/clazzati/final/LeidenStandalone/data/data/subSet/histo_17250099_3.root
-/home/HPC/clazzati/final/LeidenStandalone/data/data/subSet/histo_17250099_39.root
-/home/HPC/clazzati/final/LeidenStandalone/data/data/subSet/histo_17250099_56.root
-/home/HPC/clazzati/final/LeidenStandalone/data/data/subSet/histo_17250099_57.root
-/home/HPC/clazzati/final/LeidenStandalone/data/data/subSet/histo_17250099_72.root
-/home/HPC/clazzati/final/LeidenStandalone/data/data/subSet/histo_17250099_73.root
-/home/HPC/clazzati/final/LeidenStandalone/data/data/subSet/histo_17250099_8.root
-/home/HPC/clazzati/final/LeidenStandalone/data/data/subSet/histo_17250099_89.root
+
