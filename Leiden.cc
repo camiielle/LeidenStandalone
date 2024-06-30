@@ -425,7 +425,10 @@ namespace ticl {
         communities.erase(it);
       }
     }
-
+    std::cout << "__LINE__" << std::endl;
+    for (auto const &node : graph.getNodes()) {
+      auto it = partition.findCommunity(node);
+    }
     return partition;
   }
 
@@ -559,6 +562,12 @@ namespace ticl {
                              double theta) {
     //fills an empty partition with a singleton partition
     auto &refinedPartition = singletonPartition(graph, singlePartition);
+    for (auto const &refinedCommunity : refinedPartition.getCommunities()) {
+      std::cout << __LINE__ << std::endl;
+      for (auto const &node : refinedCommunity.getNodes()) {
+        auto const &nodeComm = partition.findCommunity(node);
+      }
+    }
     auto const &communities = partition.getCommunities();
     for (auto const &community : communities) {
       mergeNodesSubset(refinedPartition, community, gamma, nEdges, theta);
@@ -566,11 +575,7 @@ namespace ticl {
     assert(refinedPartition.getCommunities().size() >= partition.getCommunities().size());
     //checking that every node in P refined is also in P
     //ASSERT BELOW FAILS, BUT NOT for FIRST ITERATION
-    for (auto const &refinedCommunity : refinedPartition.getCommunities()) {
-      for (auto const &node : refinedCommunity.getNodes()) {
-        auto const &nodeComm = partition.findCommunity(node);
-      }
-    }
+
     std::cout << "Every node in Prefined is also contained in P" << std::endl;
     return refinedPartition;
   }
