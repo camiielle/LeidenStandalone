@@ -23,8 +23,6 @@ namespace ticl {
     std::vector<unsigned int> innerNeighboursId_;
     std::vector<unsigned int> neighboursId_;
     bool alreadyVisited_{false};
-    //elementary is a Node of degree 0
-    int degree_{0};
     //bool areCompatible(const std::vector<Node>& graph, const unsigned int& outerNode) { return true; };
 
   public:
@@ -40,7 +38,8 @@ namespace ticl {
     void addInnerNeighbour(unsigned int trackster_id) { innerNeighboursId_.push_back(trackster_id); }
     void addNeighbour(unsigned int trackster_id) { neighboursId_.push_back(trackster_id); }
     unsigned int getId() const { return index_; }
-    int getDegree() const { return degree_; }
+    //elementary is a Node of degree 0
+    int getDegree() const { return 0; }
     std::vector<unsigned int> const& getOuterNeighbours() const { return outerNeighboursId_; }
     std::vector<unsigned int> const& getInnerNeighbours() const { return innerNeighboursId_; }
     std::vector<unsigned int> const& getNeighbours() const { return neighboursId_; }

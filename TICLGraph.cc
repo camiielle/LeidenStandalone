@@ -37,7 +37,7 @@ namespace ticl {
 
   struct Equal {
     bool operator()(Elementary const& e1, Elementary const& e2) {
-      return (e1.getId() == e2.getId()) && (e1.getNeighbours() == e2.getNeighbours());
+      return (e1.getId() == e2.getId());
     }
 
     bool operator()(Community const& c1, Community const& c2) {
