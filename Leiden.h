@@ -14,15 +14,16 @@ namespace ticl {
   Partition &removeEmptyCommunities(Partition &partition);
 
   Partition &refinePartition(
-      TICLGraph const &graph, Partition &partition, Partition &singlePartition, int gamma, double theta);
+      TICLGraph const &graph, Partition const&partition, Partition &singlePartition, int gamma, int nEdges, double theta);
 
-  Partition &moveNodesFast(TICLGraph const &graph, Partition &partition);
+  Partition &moveNodesFast(TICLGraph const &graph, Partition &partition, int nEdges);
 
   Partition &singletonPartition(TICLGraph const &graph, Partition &singlePartition);
 
-  Partition &mergeNodesSubset(Partition &partition, Community const &subset, int gamma);
+  Partition &mergeNodesSubset(Partition &partition, Community const &subset, int gamma, int nEdges, double theta);
 
-  TICLGraph &aggregateGraph(TICLGraph &graph, Partition const &partition);
+  TICLGraph &aggregateGraph(TICLGraph &graph, Partition const &refinedPartition, Partition const& partition);
 }  // namespace ticl
 
 #endif
+

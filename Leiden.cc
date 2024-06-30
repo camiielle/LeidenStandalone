@@ -11,53 +11,54 @@
 
 namespace ticl {
 
-  void leidenAlgorithm(TICLGraph &graph, Partition &partition, std::vector<Flat> &flatFinalPartition, int gamma, double theta) {
-    moveNodesFast(graph, partition);
+  void leidenAlgorithm(
+      TICLGraph &graph, Partition &partition, std::vector<Flat> &flatFinalPartition, int gamma, double theta) {
+    auto const nEdges = totalEdges(graph);
+    std::cout << __LINE__ << std::endl;
+    moveNodesFast(graph, partition, nEdges);
     //moveNodesFast(partition, gamma_);
     std::cout << "MOVED NODES FAST\n";
 
     if (!(isAlgorithmDone(graph, partition))) {
-      std::cout << __LINE__ << std::endl;
       Partition refinedPartition = Partition{std::vector<Community>{}};
-      std::cout << __LINE__ << std::endl;
       assert(refinedPartition.getCommunities().empty());
-      std::cout << __LINE__ << std::endl;
-      //PROBLEM SEEMS TO BE HERE
-      refinePartition(graph, partition, refinedPartition, gamma, theta);
-      std::cout << __LINE__ << std::endl;
+      refinePartition(graph, partition, refinedPartition, gamma, nEdges, theta);
       //create aggregate graph based on refined partition P_ref
-      aggregateGraph(graph, refinedPartition);
-      std::cout << __LINE__ << std::endl;
-      //but maintain partition P
+      aggregateGraph(graph, partition, refinedPartition);
+      //but maintain partition Pf
       auto &communities = partition.getCommunities();
-      std::cout << __LINE__ << std::endl;
       std::vector<Community> aggregatedCommunities{};
-      std::cout << __LINE__ << std::endl;
       for (auto const &community : communities) {
         Community aggregatedCommunity{{}, degree(community) + 1};
-        std::cout << __LINE__ << std::endl;
         for (auto const &aggregateNode : graph.getNodes()) {
           if (isCommunityContained(std::get<Community>(aggregateNode), community)) {
             aggregatedCommunity.getNodes().push_back(aggregateNode);
+          } else {
+            std::cout << "I am an aggregate node who is not contained in any P community" << std::endl;
           }
         }
-        std::cout << __LINE__ << std::endl;
         aggregatedCommunities.push_back(aggregatedCommunity);
-        std::cout << __LINE__ << std::endl;
       }
+      std::cout << "N Aggregated communities: " << aggregatedCommunities.size() << std::endl;
       communities = aggregatedCommunities;
-      std::cout << __LINE__ << std::endl;
       leidenAlgorithm(graph, partition, flatFinalPartition, gamma, theta);
     }
 
     else {
-      std::cout << __LINE__ << std::endl;
       partition.flattenPartition(flatFinalPartition);
-      std::cout << __LINE__ << std::endl;
     }
   }
 
   bool isAlgorithmDone(TICLGraph const &graph, Partition const &partition) {
+    //empty communities should have been removed in MoveNodesFast
+    auto const &communities = partition.getCommunities();
+    for (auto const &community : communities) {
+      assert(!(community.getNodes().empty()));
+    }
+
+    std::cout << "PARTITION SIZE: " << partition.getCommunities().size() << " GRAPH SIZE: " << graph.getNodes().size()
+              << std::endl;
+
     return partition.getCommunities().size() == graph.getNodes().size();
   }
 
@@ -67,7 +68,7 @@ namespace ticl {
     int CPMResult{};
     for (auto const &community : partition.getCommunities()) {
       int n{communitySize(community, 0)};
-      CPMResult += (numberOfEdges(community, community) - gamma * n * (n - 1) / 2);
+      CPMResult += numberOfEdges(community, community) - gamma * n * (n - 1) / 2;
     }
     return CPMResult;
   }
@@ -188,11 +189,11 @@ namespace ticl {
   }
 
   void moveNode(Community &communityFrom, Community &communityTo, Node const &node) {
+    communityTo.getNodes().push_back(node);
     auto it = std::find(communityFrom.getNodes().begin(), communityFrom.getNodes().end(), node);
     assert(it != communityFrom.getNodes().end());
     assert(&(*it) != &node);
     communityFrom.getNodes().erase(it);
-    communityTo.getNodes().push_back(node);
   }
 
   /*void queueCommunity(Community &community, std::queue<Node> &queue) {
@@ -347,8 +348,7 @@ namespace ticl {
   return partition;
 }*/
 
-  Partition &moveNodesFast(TICLGraph const &graph, Partition &partition) {
-    auto const nEdges = totalEdges(graph);
+  Partition &moveNodesFast(TICLGraph const &graph, Partition &partition, int nEdges) {
     auto const nNodes = graph.getNodes().size();
 
     //all nodes are added to queue in random order
@@ -359,9 +359,16 @@ namespace ticl {
       auto &nodes = community.getNodes();
       queue.insert(queue.end(), nodes.begin(), nodes.end());
     });
+    assert(nNodes == queue.size());
+    std::cout << "NODES IN GRAPH: " << nNodes << " ELEM IN QUEUE " << queue.size() << std::endl;
+
     std::random_device rd;
     std::default_random_engine g(rd());
     std::shuffle(queue.begin(), queue.end(), g);
+    //tells me the aggregation degree
+    std::cout << __LINE__ << std::endl;
+    auto deg = degree(queue[0]);
+    std::cout << __LINE__ << std::endl;
 
     std::size_t front_index{0};
     while (front_index != queue.size()) {
@@ -381,7 +388,10 @@ namespace ticl {
         deltaModularityFromEmpty = delta_modularity_from_empty(nEdges, currentCommunity, currentNode);
       }
 
-      if ((deltaModularityFromEmpty - bestDeltaModularity) > 0.0001) {
+      std::cout << "BEST DELTA MODULARITY " << bestDeltaModularity << " FROM EMPTY: " << deltaModularityFromEmpty
+                << std::endl;
+
+      if (deltaModularityFromEmpty > bestDeltaModularity && deltaModularityFromEmpty > 0.0001 * (5 * deg + 1)) {
         Community newCommunity{{}, degree(currentNode) + 1};
         communities.push_back(newCommunity);
         moveNode(currentCommunity, newCommunity, currentNode);
@@ -394,7 +404,7 @@ namespace ticl {
             }
           });
         });
-      } else if (bestDeltaModularity > 0.0001) {
+      } else if (bestDeltaModularity > 0.0001 * (5 * deg + 1)) {
         moveNode(currentCommunity, communities[indexBestCommunity], currentNode);
         // making sure all nbrs of currentNode who are not in bestCommunity will be visited
         for (unsigned int i = 0; i < communities.size(); ++i) {
@@ -448,7 +458,9 @@ namespace ticl {
     assert(edges >= 0);
     auto nodeSize{communitySize(singletonCommunity, 0)};
     auto subsetSize{communitySize(subset, 0)};
-    return (edges >= (gamma * nodeSize * (subsetSize - nodeSize)));
+    std::cout << "Well connected node functioon: Edges" << 2 * edges
+              << "  2nd member: " << (gamma * nodeSize * (subsetSize - nodeSize)) << std::endl;
+    return 2 * edges >= (gamma * nodeSize * (subsetSize - nodeSize));
   }
 
   bool isCommunityWellConnected(Community const &community, Community const &subset, int gamma) {
@@ -470,34 +482,34 @@ namespace ticl {
                                   Node const &node,
                                   Community const &nodeCommunity,
                                   Community const &subset,
-                                  int gamma,
+                                  int nEdges,
                                   double theta) {
-    std::vector<double> deltaCPMs{};
+    std::vector<double> deltaModularities{};
 
     //calculating delta_H for all communities
     for (auto const &community : communities) {
-      if (isCommunityWellConnected(community, subset, gamma)) {
-        deltaCPMs.push_back((delta_CPM_after_move(gamma, nodeCommunity, community, node)));
+      if (isCommunityContained(community, subset) && isCommunityWellConnected(community, subset, 1)) {
+        deltaModularities.push_back((delta_modularity_after_move(nEdges, nodeCommunity, community, node)));
       } else {
-        // communities not well connected are not considered
-        deltaCPMs.push_back(-1.);
+        // communities not well connected or not within subset are not considered
+        deltaModularities.push_back(-1.);
       }
     }
 
     //creating the discrete probability function
     std::vector<double> distribution{};
-    for (auto const &deltaCPM : deltaCPMs) {
-      if (deltaCPM < 0.) {
+    for (auto const &deltaModularity : deltaModularities) {
+      if (deltaModularity < 0.) {
         distribution.push_back(0.);
       } else {
         assert(theta > 0.);
-        distribution.push_back(std::exp(deltaCPM / theta));
+        distribution.push_back(std::exp(deltaModularity / theta));
       }
     }
 
     //extracting a random community
     std::random_device rd;
-    std::mt19937 gen(rd());
+    std::default_random_engine gen(rd());
     std::discrete_distribution<> d(distribution.begin(), distribution.end());
     //extracts a random index
     int resultIndex = d(gen);
@@ -505,23 +517,28 @@ namespace ticl {
     return resultIndex;
   }
 
-  Partition &mergeNodesSubset(Partition &partition, Community const &subset, int gamma, double theta) {
+  Partition &mergeNodesSubset(Partition &partition, Community const &subset, int gamma, int nEdges, double theta) {
     auto &communities = partition.getCommunities();
 
     //consider only nodes that are well connected within subset S
     for (auto const &node : subset.getNodes()) {
       if (isNodeWellConnected(node, subset, gamma)) {
+        std::cout << "I am a well-connected node " << std::endl;
         int index = partition.findCommunityIndex(node);
         auto &nodeCommunity = communities[index];
-        //std::cout << "COMM (non recursive) SIZE " << nodeCommunity.getNodes().size();
-        //std::cout << " COMM SIZE " << communitySize(nodeCommunity, 0);
         assert(communitySize(nodeCommunity, 0) != 0);
         //consider only nodes that have not yet been merged
         if (communitySize(nodeCommunity, 0) == 1) {
           int communityToIndex{
-              extractRandomCommunityIndex(communities, partition, node, nodeCommunity, subset, gamma, theta)};
-          auto &communityTo = communities[communityToIndex];
-          moveNode(nodeCommunity, communityTo, node);
+              extractRandomCommunityIndex(communities, partition, node, nodeCommunity, subset, nEdges, theta)};
+          if (communityToIndex != index) {
+            auto &communityTo = communities[communityToIndex];
+            assert(isCommunityContained(communityTo, subset));
+            std::cout << "Community to before move is contained in subset" << std::endl;
+            moveNode(nodeCommunity, communityTo, node);
+            assert(isCommunityContained(communityTo, subset));
+            std::cout << "Community to after move is contained in subset" << std::endl;
+          }
           //removing empty communities
           if (nodeCommunity.getNodes().empty()) {
             auto it = communities.begin() + index;
@@ -534,27 +551,47 @@ namespace ticl {
     return partition;
   }
 
-  Partition &refinePartition(
-      TICLGraph const &graph, Partition &partition, Partition &singlePartition, int gamma, double theta) {
+  Partition &refinePartition(TICLGraph const &graph,
+                             Partition const &partition,
+                             Partition &singlePartition,
+                             int gamma,
+                             int nEdges,
+                             double theta) {
     //fills an empty partition with a singleton partition
     auto &refinedPartition = singletonPartition(graph, singlePartition);
     auto const &communities = partition.getCommunities();
     for (auto const &community : communities) {
-      mergeNodesSubset(refinedPartition, community, gamma, theta);
+      mergeNodesSubset(refinedPartition, community, gamma, nEdges, theta);
     }
+    assert(refinedPartition.getCommunities().size() >= partition.getCommunities().size());
+    //checking that every node in P refined is also in P
+    //ASSERT BELOW FAILS, BUT NOT for FIRST ITERATION
+    for (auto const &refinedCommunity : refinedPartition.getCommunities()) {
+      for (auto const &node : refinedCommunity.getNodes()) {
+        auto const &nodeComm = partition.findCommunity(node);
+      }
+    }
+    std::cout << "Every node in Prefined is also contained in P" << std::endl;
     return refinedPartition;
   }
 
   //communities become nodes in aggregate graph
-  TICLGraph &aggregateGraph(TICLGraph &graph, Partition const &partition) {
-    std::vector<Community> const &communities{partition.getCommunities()};
+  TICLGraph &aggregateGraph(TICLGraph &graph, Partition const &partition, Partition const &refinedPartition) {
+    auto const &refinedCommunities = refinedPartition.getCommunities();
     std::vector<Node> aggregatedNodes{};
-    aggregatedNodes.reserve(communities.size());
-    std::for_each(communities.begin(), communities.end(), [&aggregatedNodes](auto const &community) {
-      aggregatedNodes.push_back(Node{community});
+    aggregatedNodes.reserve(refinedCommunities.size());
+    std::for_each(refinedCommunities.begin(), refinedCommunities.end(), [&](auto const &refinedCommunity) {
+      assert(!(refinedCommunity.getNodes().empty()));
+      for (auto const &node : refinedCommunity.getNodes()) {
+        auto const &nodeOriginalCommunity = partition.findCommunity(node);
+        assert(isCommunityContained(refinedCommunity, nodeOriginalCommunity));
+      }
+      Node aggregateNode = refinedCommunity;
+      //assert(isCommunityContained(std::get<Community>(aggregateNode), nodeOriginalCommunity));
+      aggregatedNodes.push_back(aggregateNode);
     });
-
-    assert(aggregatedNodes.size() == communities.size());
+    std::cout << "REFINED PARTITION SIZE: " << refinedCommunities.size() << std::endl;
+    assert(aggregatedNodes.size() == refinedCommunities.size());
     graph.setNodes(aggregatedNodes);
     return graph;
   }

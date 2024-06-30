@@ -141,7 +141,7 @@ void processEvent(TTree* tree, int ev) {
     singletonPartition(graph, partition);
     std::cout << "INIITIAL GRAPH NODE SIZE " << partition.getCommunities().size() << std::endl;
     int gamma{1};
-    double theta{0.01};
+    double theta{0.005};
     leidenAlgorithm(graph, partition, flatFinalPartition, gamma, theta);
   }
 }
