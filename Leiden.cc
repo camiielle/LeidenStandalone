@@ -107,7 +107,6 @@ namespace ticl {
     } else {
       CPMResult += (numberOfEdges(community, community) -
                     gamma * (communitySize(community, 0) * communitySize(community, 0) / 2));
-      //PROBLEM CAUSED AFTER THIS LINE
     }
   }
   return CPMResult;
@@ -189,7 +188,9 @@ namespace ticl {
   }
 
   void moveNode(Community &communityFrom, Community &communityTo, Node const &node) {
+    std::cout << "CommunityTo size before node is added: " << communityTo.getNodes().size() << std::endl;
     communityTo.getNodes().push_back(node);
+    std::cout << "CommunityTo size after node is added: " << communityTo.getNodes().size() << std::endl;
     auto it = std::find(communityFrom.getNodes().begin(), communityFrom.getNodes().end(), node);
     assert(it != communityFrom.getNodes().end());
     assert(&(*it) != &node);
@@ -230,7 +231,6 @@ namespace ticl {
     assert(bestDeltaCPM == 0);
     int indexBestCommunity{};
     for (unsigned int i = 0; i < communities.size(); ++i) {
-      //PROBLEM IS IN THE LINE BELOW!!!!!
       auto deltaCPM = delta_CPM_after_move(gamma, currentCommunity, communities[i], currentNode);
       if (deltaCPM > bestDeltaCPM) {
         bestDeltaCPM = deltaCPM;
@@ -395,6 +395,7 @@ namespace ticl {
         Community newCommunity{{}, degree(currentNode) + 1};
         communities.push_back(newCommunity);
         moveNode(currentCommunity, newCommunity, currentNode);
+        assert(!(newCommunity.getNodes().empty()));
         // making sure all nbrs of currentNode who are not in bestCommunity will be visited
         std::for_each(communities.begin(), communities.end() - 1, [&](auto const &community) {
           std::for_each(community.getNodes().begin(), community.getNodes().end(), [&](auto const &node) {
@@ -425,7 +426,11 @@ namespace ticl {
         communities.erase(it);
       }
     }
-    std::cout << "__LINE__" << std::endl;
+    std::cout << "N of communities after move: " << partition.getCommunities().size() << std::endl;
+    for (auto const &community : partition.getCommunities()) {
+      std::cout << "Community size" << community.getNodes().size() << std::endl;
+    }
+    //THE PROBLEM IS HERE!
     for (auto const &node : graph.getNodes()) {
       auto it = partition.findCommunity(node);
     }

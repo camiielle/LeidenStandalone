@@ -22,7 +22,7 @@ namespace ticl {
 
   Partition &mergeNodesSubset(Partition &partition, Community const &subset, int gamma, int nEdges, double theta);
 
-  TICLGraph &aggregateGraph(TICLGraph &graph, Partition const &refinedPartition, Partition const& partition);
+  TICLGraph &aggregateGraph(TICLGraph &graph, Partition const& partition, Partition const &refinedPartition);
 }  // namespace ticl
 
 #endif
