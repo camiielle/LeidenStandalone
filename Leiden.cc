@@ -453,7 +453,7 @@ namespace ticl {
     assert(edges >= 0);
     auto nodeSize{communitySize(singletonCommunity, 0)};
     auto subsetSize{communitySize(subset, 0)};
-    return 2 * edges >= (gamma * nodeSize * (subsetSize - nodeSize));
+    return edges >= (gamma * nodeSize * (subsetSize - nodeSize));
   }
 
   bool isCommunityWellConnected(Community const &community, Community const &subset, int gamma) {
@@ -467,7 +467,7 @@ namespace ticl {
     assert(edges >= 0);
     auto comSize{communitySize(community, 0)};
     auto subsetSize{communitySize(subset, 0)};
-    return (2 * edges >= (gamma * comSize * (subsetSize - comSize)));
+    return (edges >= (gamma * comSize * (subsetSize - comSize)));
   }
 
   int extractRandomCommunityIndex(std::vector<Community> const &communities,
