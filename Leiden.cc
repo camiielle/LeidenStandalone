@@ -31,11 +31,11 @@ namespace ticl {
       for (auto const &community : communities) {
         Community aggregatedCommunity{{}, degree(community) + 1};
         for (auto const &aggregateNode : graph.getNodes()) {
+          assert(std::holds_alternative<Community>(aggregateNode));
           if (isCommunityContained(std::get<Community>(aggregateNode), community)) {
             aggregatedCommunity.getNodes().push_back(aggregateNode);
-          } else {
-            std::cout << "I am an aggregate node who is not contained in any P community" << std::endl;
-          }
+            std::cout << "I am an aggregate node who is contained in a P community" << std::endl;
+          } 
         }
         aggregatedCommunities.push_back(aggregatedCommunity);
       }
@@ -347,20 +347,6 @@ namespace ticl {
   Partition &moveNodesFast(TICLGraph const &graph, Partition &partition, int nEdges, bool &hasNodeBeenMoved) {
     assert(hasNodeBeenMoved == false);
     auto const nNodes = graph.getNodes().size();
-    if (nNodes == 3) {
-      std::cout << "I am entering here" << std::endl;
-      for (auto const &node : graph.getNodes()) {
-        int i = 0;
-        if (std::holds_alternative<Elementary>(node)) {
-          auto const &nbrs = std::get<Elementary>(node).getNeighbours();
-          std::cout << "Nbrs of node: " << i << std::endl;
-          for (int j = 0; j < nbrs.size(); ++j)
-            std::cout << nbrs[j];
-        }
-        ++i;
-      }
-    }
-
     //all nodes are added to queue in random order
     std::vector<Node> queue{};
     queue.reserve(nNodes * 4);
@@ -577,6 +563,7 @@ namespace ticl {
     }
     assert(refinedPartition.getCommunities().size() >= partition.getCommunities().size());
     std::cout << "Every node in Prefined is also contained in P" << std::endl;
+    std::cout << "REFINED PARTITION SIZE: " << refinedPartition.getCommunities().size() << std::endl;
     return refinedPartition;
   }
 
@@ -595,7 +582,6 @@ namespace ticl {
       //assert(isCommunityContained(std::get<Community>(aggregateNode), nodeOriginalCommunity));
       aggregatedNodes.push_back(aggregateNode);
     });
-    std::cout << "REFINED PARTITION SIZE: " << refinedCommunities.size() << std::endl;
     assert(aggregatedNodes.size() == refinedCommunities.size());
     graph.setNodes(aggregatedNodes);
     return graph;
