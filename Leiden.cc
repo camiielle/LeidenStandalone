@@ -366,9 +366,7 @@ namespace ticl {
     std::default_random_engine g(rd());
     std::shuffle(queue.begin(), queue.end(), g);
     //tells me the aggregation degree
-    std::cout << __LINE__ << std::endl;
     auto deg = degree(queue[0]);
-    std::cout << __LINE__ << std::endl;
 
     std::size_t front_index{0};
     while (front_index != queue.size()) {
@@ -377,7 +375,6 @@ namespace ticl {
       auto currentCommunityIndex = partition.findCommunityIndex(currentNode);
       auto &communities = partition.getCommunities();
       auto &currentCommunity = communities[currentCommunityIndex];
-
       double bestDeltaModularity{0};
       int indexBestCommunity{
           bestCommunityIndexModularity(communities, bestDeltaModularity, currentCommunity, currentNode, nEdges)};
@@ -393,9 +390,9 @@ namespace ticl {
 
       if (deltaModularityFromEmpty > bestDeltaModularity && deltaModularityFromEmpty > 0.0001 * (5 * deg + 1)) {
         Community newCommunity{{}, degree(currentNode) + 1};
-        communities.push_back(newCommunity);
         moveNode(currentCommunity, newCommunity, currentNode);
         assert(!(newCommunity.getNodes().empty()));
+        communities.push_back(newCommunity);
         // making sure all nbrs of currentNode who are not in bestCommunity will be visited
         std::for_each(communities.begin(), communities.end() - 1, [&](auto const &community) {
           std::for_each(community.getNodes().begin(), community.getNodes().end(), [&](auto const &node) {
@@ -427,13 +424,6 @@ namespace ticl {
       }
     }
     std::cout << "N of communities after move: " << partition.getCommunities().size() << std::endl;
-    for (auto const &community : partition.getCommunities()) {
-      std::cout << "Community size" << community.getNodes().size() << std::endl;
-    }
-    //THE PROBLEM IS HERE!
-    for (auto const &node : graph.getNodes()) {
-      auto it = partition.findCommunity(node);
-    }
     return partition;
   }
 
@@ -567,20 +557,11 @@ namespace ticl {
                              double theta) {
     //fills an empty partition with a singleton partition
     auto &refinedPartition = singletonPartition(graph, singlePartition);
-    for (auto const &refinedCommunity : refinedPartition.getCommunities()) {
-      std::cout << __LINE__ << std::endl;
-      for (auto const &node : refinedCommunity.getNodes()) {
-        auto const &nodeComm = partition.findCommunity(node);
-      }
-    }
     auto const &communities = partition.getCommunities();
     for (auto const &community : communities) {
       mergeNodesSubset(refinedPartition, community, gamma, nEdges, theta);
     }
     assert(refinedPartition.getCommunities().size() >= partition.getCommunities().size());
-    //checking that every node in P refined is also in P
-    //ASSERT BELOW FAILS, BUT NOT for FIRST ITERATION
-
     std::cout << "Every node in Prefined is also contained in P" << std::endl;
     return refinedPartition;
   }

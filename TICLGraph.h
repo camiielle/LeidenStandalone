@@ -19,10 +19,10 @@ namespace ticl {
   class Elementary {
     unsigned index_;
     bool isTrackster_;
+    bool alreadyVisited_{false};
     std::vector<unsigned int> outerNeighboursId_;
     std::vector<unsigned int> innerNeighboursId_;
     std::vector<unsigned int> neighboursId_;
-    bool alreadyVisited_{false};
     //bool areCompatible(const std::vector<Node>& graph, const unsigned int& outerNode) { return true; };
 
   public:
