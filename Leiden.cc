@@ -246,7 +246,7 @@ namespace ticl {
     int indexBestCommunity{};
     for (unsigned int i = 0; i < communities.size(); ++i) {
       auto deltaModularity = delta_modularity_after_move(totalEdges, currentCommunity, communities[i], currentNode);
-      if ((deltaModularity - bestDeltaModularity) > 0.0001) {
+      if (deltaModularity > bestDeltaModularity) {
         bestDeltaModularity = deltaModularity;
         indexBestCommunity = i;
       }
@@ -397,7 +397,7 @@ namespace ticl {
       std::cout << "BEST DELTA MODULARITY " << bestDeltaModularity << " FROM EMPTY: " << deltaModularityFromEmpty
                 << std::endl;
 
-      if (deltaModularityFromEmpty > bestDeltaModularity && deltaModularityFromEmpty > 0.005 * (5 * deg + 1)) {
+      if (deltaModularityFromEmpty > bestDeltaModularity && deltaModularityFromEmpty > 0.00001 * (5 * deg + 1)) {
         Community newCommunity{{}, degree(currentNode) + 1};
         moveNode(currentCommunity, newCommunity, currentNode);
         assert(!(newCommunity.getNodes().empty()));
@@ -412,7 +412,7 @@ namespace ticl {
             }
           });
         });
-      } else if (bestDeltaModularity > 0.0001 * (5 * deg + 1)) {
+      } else if (bestDeltaModularity > 0.00001 * (5 * deg + 1)) {
         moveNode(currentCommunity, communities[indexBestCommunity], currentNode);
         hasNodeBeenMoved = true;
         // making sure all nbrs of currentNode who are not in bestCommunity will be visited
