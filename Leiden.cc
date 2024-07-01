@@ -188,9 +188,7 @@ namespace ticl {
   }
 
   void moveNode(Community &communityFrom, Community &communityTo, Node const &node) {
-    std::cout << "CommunityTo size before node is added: " << communityTo.getNodes().size() << std::endl;
     communityTo.getNodes().push_back(node);
-    std::cout << "CommunityTo size after node is added: " << communityTo.getNodes().size() << std::endl;
     auto it = std::find(communityFrom.getNodes().begin(), communityFrom.getNodes().end(), node);
     assert(it != communityFrom.getNodes().end());
     assert(&(*it) != &node);
@@ -456,7 +454,7 @@ namespace ticl {
     assert(edges >= 0);
     auto nodeSize{communitySize(singletonCommunity, 0)};
     auto subsetSize{communitySize(subset, 0)};
-    std::cout << "Well connected node functioon: Edges" << 2 * edges
+    std::cout << "Well connected node function: Edges" << 2 * edges
               << "  2nd member: " << (gamma * nodeSize * (subsetSize - nodeSize)) << std::endl;
     return 2 * edges >= (gamma * nodeSize * (subsetSize - nodeSize));
   }
@@ -485,10 +483,15 @@ namespace ticl {
     std::vector<double> deltaModularities{};
 
     //calculating delta_H for all communities
+    int i = 0;
     for (auto const &community : communities) {
       if (isCommunityContained(community, subset) && isCommunityWellConnected(community, subset, 1)) {
+        std::cout << "Index " << i << "is in first branch" << std::endl;
+        ++i;
         deltaModularities.push_back((delta_modularity_after_move(nEdges, nodeCommunity, community, node)));
       } else {
+        std::cout << "Index " << i << "is in second branch" << std::endl;
+        ++i;
         // communities not well connected or not within subset are not considered
         deltaModularities.push_back(-1.);
       }
@@ -505,19 +508,26 @@ namespace ticl {
       }
     }
 
-    //extracting a random community
-    std::random_device rd;
-    std::default_random_engine gen(rd());
-    std::discrete_distribution<> d(distribution.begin(), distribution.end());
-    //extracts a random index
-    int resultIndex = d(gen);
-
+    int resultIndex = 0;
+    if (std::count(distribution.begin(), distribution.end(), 0.) != distribution.size()) {
+      //extracting a random community
+      std::random_device rd;
+      std::default_random_engine gen(rd());
+      std::discrete_distribution<> d(distribution.begin(), distribution.end());
+      //extracts a random index
+      resultIndex = d(gen);
+      //ASSERT BELOW FAILS
+      std::cout << "result Index: " << resultIndex << std::endl;
+      assert(isCommunityContained(communities[resultIndex], subset));
+    } else {
+      resultIndex = -1;
+    }
     return resultIndex;
   }
 
   Partition &mergeNodesSubset(Partition &partition, Community const &subset, int gamma, int nEdges, double theta) {
     auto &communities = partition.getCommunities();
-
+    auto const &subsetNodes = subset.getNodes();
     //consider only nodes that are well connected within subset S
     for (auto const &node : subset.getNodes()) {
       if (isNodeWellConnected(node, subset, gamma)) {
@@ -529,8 +539,11 @@ namespace ticl {
         if (communitySize(nodeCommunity, 0) == 1) {
           int communityToIndex{
               extractRandomCommunityIndex(communities, partition, node, nodeCommunity, subset, nEdges, theta)};
-          if (communityToIndex != index) {
+          if (communityToIndex >= 0 && communityToIndex != index) {
             auto &communityTo = communities[communityToIndex];
+            std::cout << "Community TO index: " << communityToIndex << std::endl;
+            std::cout << "Community TO size before merge: " << communityTo.getNodes().size() << std::endl;
+            //THE ASSERT BELOW FAILS
             assert(isCommunityContained(communityTo, subset));
             std::cout << "Community to before move is contained in subset" << std::endl;
             moveNode(nodeCommunity, communityTo, node);
